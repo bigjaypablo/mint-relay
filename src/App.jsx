@@ -14,7 +14,7 @@ export default function App() {
   const [wallet, setWallet] = useState('');
   
   const [handleError, setHandleError] = useState('');
-  const [handleAvailable, setHandleAvailable] = useState(null); // null, true, false
+  const [handleAvailable, setHandleAvailable] = useState(null);
   const [isCheckingHandle, setIsCheckingHandle] = useState(false);
   
   const [referrerError, setReferrerError] = useState('');
@@ -45,7 +45,6 @@ export default function App() {
     }
   }, []);
 
-  // Debounced availability check in Supabase
   useEffect(() => {
     if (!handle || handleError) {
       setHandleAvailable(null);
@@ -182,9 +181,16 @@ export default function App() {
     setTasks(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const allTasksCompleted = Object.values(tasks).every(Boolean);
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMsg('');
+
+    if (!allTasksCompleted) {
+      setErrorMsg('Please complete all 4 required tasks before confirming registration.');
+      return;
+    }
 
     const isHandleValid = validateXHandle(handle);
     const isWalletValid = validateSolanaWallet(wallet);
@@ -267,7 +273,7 @@ export default function App() {
       <form onSubmit={handleRegister} className="space-y-6 relative z-10">
         
         {errorMsg && (
-          <div className="p-4 bg-red-950/50 border border-red-500/50 rounded-xl text-red-300 text-xs font-mono backdrop-blur-md shadow-lg shadow-red-950/50">
+          <div className="p-4 bg-red-950/50 border border-red-500/50 rounded-xl text-red-300 text-xs font-mono backdrop-blur-md shadow-lg shadow-red-950/50 animate-shake">
             ⚠️ {errorMsg}
           </div>
         )}
@@ -280,7 +286,6 @@ export default function App() {
               <h2 className="text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">01. Your Identity</h2>
             </div>
             
-            {/* Availability Pill */}
             {isCheckingHandle ? (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#18181B] text-[#A1A1AA] animate-pulse">checking...</span>
             ) : handleAvailable === true ? (
@@ -291,7 +296,6 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
-            {/* Handle Input */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Your X username</label>
               <div className="relative flex items-center">
@@ -313,7 +317,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Generated Referral Link Preview Box */}
             {handleAvailable === true && (
               <div className="p-3.5 bg-[#000000]/40 border border-[#10B981]/30 rounded-xl space-y-2 animate-fade-in">
                 <div className="flex items-center justify-between">
@@ -333,7 +336,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Referrer Input */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Invite code · optional</label>
               <div className="relative flex items-center">
@@ -383,10 +385,10 @@ export default function App() {
         <div className="space-y-3 pt-2">
           <button 
             type="submit"
-            disabled={loading || registered || handleAvailable === false}
-            className="w-full py-4 bg-gradient-to-r from-[#10B981] via-[#059669] to-[#047857] text-black font-extrabold rounded-xl text-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all cursor-pointer disabled:opacity-50 font-mono tracking-wider uppercase"
+            disabled={loading || registered || !allTasksCompleted || handleAvailable === false}
+            className="w-full py-4 bg-gradient-to-r from-[#10B981] via-[#059669] to-[#047857] text-black font-extrabold rounded-xl text-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed font-mono tracking-wider uppercase"
           >
-            {loading ? 'Writing to DB...' : registered ? '✓ Spot Claimed' : '⚡ Confirm Registration'}
+            {loading ? 'Writing to DB...' : registered ? '✓ Spot Claimed' : !allTasksCompleted ? ' Complete All Tasks to Confirm' : '⚡ Confirm Registration'}
           </button>
 
           <p className="text-[11px] text-[#71717A] text-center">
