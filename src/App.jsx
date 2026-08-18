@@ -51,7 +51,6 @@ export default function App() {
     }
   };
 
-  // Extract clean handle if full URL is pasted
   const sanitizeHandle = (input) => {
     let clean = input.trim();
     if (clean.includes('x.com/') || clean.includes('twitter.com/')) {
@@ -60,7 +59,6 @@ export default function App() {
     return clean.replace('@', '');
   };
 
-  // Validate handle format
   const validateXHandle = (val, setError) => {
     const clean = sanitizeHandle(val);
     const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
@@ -76,6 +74,25 @@ export default function App() {
     }
 
     setError('');
+    return true;
+  };
+
+  const validateSolanaWallet = (val) => {
+    const clean = val.trim();
+    // Base58 Solana public key regex (32 to 44 characters)
+    const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+    if (!clean) {
+      setWalletError('Solana wallet address is required.');
+      return false;
+    }
+
+    if (!solanaRegex.test(clean)) {
+      setWalletError('Please enter a valid public Solana wallet address.');
+      return false;
+    }
+
+    setWalletError('');
     return true;
   };
 
@@ -103,6 +120,16 @@ export default function App() {
     }
   };
 
+  const handleWalletChange = (e) => {
+    const val = e.target.value.trim();
+    setWallet(val);
+    if (val) {
+      validateSolanaWallet(val);
+    } else {
+      setWalletError('');
+    }
+  };
+
   const toggleTask = (key) => {
     setTasks(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -112,21 +139,15 @@ export default function App() {
     setErrorMsg('');
 
     const isHandleValid = validateXHandle(handle, setHandleError);
-    const cleanWallet = wallet.trim();
+    const isWalletValid = validateSolanaWallet(wallet);
 
-    if (!isHandleValid) return;
-
-    if (!cleanWallet || cleanWallet.length < 32 || cleanWallet.length > 44) {
-      setWalletError('Please enter a valid Solana wallet address.');
-      return;
-    } else {
-      setWalletError('');
-    }
+    if (!isHandleValid || !isWalletValid) return;
 
     setLoading(true);
 
     const formattedHandle = `@${handle.toLowerCase()}`;
     const formattedReferrer = referrer.trim() ? `@${referrer.trim().toLowerCase()}` : null;
+    const cleanWallet = wallet.trim();
 
     const { data, error } = await supabase
       .from('registrants')
@@ -213,7 +234,6 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
-            {/* Handle Input with auto @ prefix */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Your X username</label>
               <div className="relative flex items-center">
@@ -231,7 +251,6 @@ export default function App() {
               )}
             </div>
 
-            {/* Referrer Input */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Invite code · optional</label>
               <div className="relative flex items-center">
@@ -264,13 +283,13 @@ export default function App() {
             <label className="block text-xs font-mono text-[#71717A] mb-1.5">Solana Public Address</label>
             <input 
               type="text" 
-              placeholder="e.g. 7xKX..."
+              placeholder="e.g. BHKtkYoz..."
               value={wallet}
-              onChange={(e) => setWallet(e.target.value)}
-              className={`w-full bg-[#000000]/60 border ${walletError ? 'border-red-500/80' : 'border-[#27272A] focus:border-[#10B981]'} rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none transition-all`}
+              onChange={handleWalletChange}
+              className={`w-full bg-[#000000]/60 border ${walletError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : 'border-[#27272A] focus:border-[#10B981] focus:ring-[#10B981]/20'} rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all`}
             />
             {walletError && (
-              <p className="text-[11px] font-mono text-red-400 mt-1.5">{walletError}</p>
+              <p className="text-[11px] font-mono text-red-400 mt-1.5 animate-fade-in">{walletError}</p>
             )}
           </div>
         </section>
