@@ -358,7 +358,7 @@ export default function App() {
         </section>
 
         {/* 02. TASKS */}
-        <TaskChecklist tasks={tasks} toggleTask={toggleTask} />
+        <TaskChecklist tasks={tasks} setTasks={setTasks} />
 
         {/* 03. WALLET */}
         <section className="bg-[#09090B]/80 border border-[#18181B] hover:border-[#10B981]/40 transition-all duration-300 p-6 rounded-2xl space-y-4 backdrop-blur-xl emerald-glow-box">
