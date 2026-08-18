@@ -14,8 +14,12 @@ export default function App() {
   const [wallet, setWallet] = useState('');
   
   const [handleError, setHandleError] = useState('');
+  const [handleAvailable, setHandleAvailable] = useState(null); // null, true, false
+  const [isCheckingHandle, setIsCheckingHandle] = useState(false);
+  
   const [referrerError, setReferrerError] = useState('');
   const [walletError, setWalletError] = useState('');
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const [tasks, setTasks] = useState({
     follow: false,
@@ -41,6 +45,38 @@ export default function App() {
     }
   }, []);
 
+  // Debounced availability check in Supabase
+  useEffect(() => {
+    if (!handle || handleError) {
+      setHandleAvailable(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingHandle(true);
+      const formatted = `@${handle.toLowerCase()}`;
+      
+      const { data, error } = await supabase
+        .from('registrants')
+        .select('x_handle')
+        .eq('x_handle', formatted)
+        .maybeSingle();
+
+      setIsCheckingHandle(false);
+      if (error) return;
+
+      if (data) {
+        setHandleAvailable(false);
+        setHandleError(`@${handle} is already taken.`);
+      } else {
+        setHandleAvailable(true);
+        setHandleError('');
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [handle, handleError]);
+
   const fetchRegistrantCount = async () => {
     const { count, error } = await supabase
       .from('registrants')
@@ -59,27 +95,27 @@ export default function App() {
     return clean.replace('@', '');
   };
 
-  const validateXHandle = (val, setError) => {
+  const validateXHandle = (val) => {
     const clean = sanitizeHandle(val);
     const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
 
     if (!clean) {
-      setError('Username is required.');
+      setHandleError('Username is required.');
+      setHandleAvailable(null);
       return false;
     }
 
     if (!handleRegex.test(clean)) {
-      setError('Up to 15 letters, digits or underscores.');
+      setHandleError('Up to 15 letters, digits or underscores.');
+      setHandleAvailable(null);
       return false;
     }
 
-    setError('');
     return true;
   };
 
   const validateSolanaWallet = (val) => {
     const clean = val.trim();
-    // Base58 Solana public key regex (32 to 44 characters)
     const solanaRegex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 
     if (!clean) {
@@ -100,8 +136,12 @@ export default function App() {
     const raw = e.target.value;
     const clean = sanitizeHandle(raw);
     setHandle(clean);
-    if (raw.trim()) validateXHandle(clean, setHandleError);
-    else setHandleError('');
+    setHandleAvailable(null);
+    if (raw.trim()) validateXHandle(clean);
+    else {
+      setHandleError('');
+      setHandleAvailable(null);
+    }
   };
 
   const handleReferrerChange = (e) => {
@@ -130,6 +170,14 @@ export default function App() {
     }
   };
 
+  const copyReferralLink = () => {
+    if (!handle) return;
+    const link = `${window.location.origin}/?ref=${handle}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
   const toggleTask = (key) => {
     setTasks(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -138,10 +186,10 @@ export default function App() {
     e.preventDefault();
     setErrorMsg('');
 
-    const isHandleValid = validateXHandle(handle, setHandleError);
+    const isHandleValid = validateXHandle(handle);
     const isWalletValid = validateSolanaWallet(wallet);
 
-    if (!isHandleValid || !isWalletValid) return;
+    if (!isHandleValid || !isWalletValid || handleAvailable === false) return;
 
     setLoading(true);
 
@@ -181,6 +229,7 @@ export default function App() {
   };
 
   const completedCount = Object.values(tasks).filter(Boolean).length;
+  const referralLink = handle ? `${window.location.origin}/?ref=${handle}` : '';
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#FAFAFA] px-4 py-12 max-w-xl mx-auto space-y-8 font-sans relative overflow-hidden selection:bg-[#10B981] selection:text-black">
@@ -230,10 +279,19 @@ export default function App() {
               <span className="w-1.5 h-4 bg-[#10B981] rounded-full"></span>
               <h2 className="text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">01. Your Identity</h2>
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-[#18181B] text-[#71717A]">required</span>
+            
+            {/* Availability Pill */}
+            {isCheckingHandle ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#18181B] text-[#A1A1AA] animate-pulse">checking...</span>
+            ) : handleAvailable === true ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30">available</span>
+            ) : (
+              <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-[#18181B] text-[#71717A]">required</span>
+            )}
           </div>
 
           <div className="space-y-4">
+            {/* Handle Input */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Your X username</label>
               <div className="relative flex items-center">
@@ -243,14 +301,39 @@ export default function App() {
                   placeholder="username"
                   value={handle}
                   onChange={handleHandleChange}
-                  className={`w-full bg-[#000000]/60 border ${handleError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : 'border-[#27272A] focus:border-[#10B981] focus:ring-[#10B981]/20'} rounded-xl pl-9 pr-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all font-mono`}
+                  className={`w-full bg-[#000000]/60 border ${handleError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : handleAvailable ? 'border-[#10B981]/60 focus:border-[#10B981]' : 'border-[#27272A] focus:border-[#10B981]'} rounded-xl pl-9 pr-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all font-mono`}
                 />
               </div>
+
               {handleError && (
                 <p className="text-[11px] font-mono text-red-400 mt-1.5 animate-fade-in">{handleError}</p>
               )}
+              {handleAvailable === true && !handleError && (
+                <p className="text-[11px] font-mono text-[#10B981] mt-1.5 animate-fade-in">@{handle} is available.</p>
+              )}
             </div>
 
+            {/* Generated Referral Link Preview Box */}
+            {handleAvailable === true && (
+              <div className="p-3.5 bg-[#000000]/40 border border-[#10B981]/30 rounded-xl space-y-2 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase text-[#71717A] font-bold">Your Unique Referral Link</span>
+                  <span className="text-[10px] font-mono text-[#10B981]">Invite Code: @{handle}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2 bg-[#09090B] p-2 rounded-lg border border-[#18181B]">
+                  <p className="text-xs font-mono text-[#A1A1AA] truncate">{referralLink}</p>
+                  <button 
+                    type="button" 
+                    onClick={copyReferralLink}
+                    className="px-3 py-1 bg-[#10B981]/20 hover:bg-[#10B981]/30 border border-[#10B981]/40 text-[#10B981] rounded text-xs font-mono transition-all shrink-0 cursor-pointer"
+                  >
+                    {copiedLink ? '✓ Copied' : 'Copy Link'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Referrer Input */}
             <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Invite code · optional</label>
               <div className="relative flex items-center">
@@ -263,8 +346,10 @@ export default function App() {
                   className={`w-full bg-[#000000]/60 border ${referrerError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : 'border-[#27272A] focus:border-[#10B981] focus:ring-[#10B981]/20'} rounded-xl pl-9 pr-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all font-mono`}
                 />
               </div>
-              {referrerError && (
+              {referrerError ? (
                 <p className="text-[11px] font-mono text-red-400 mt-1.5 animate-fade-in">{referrerError}</p>
+              ) : (
+                <p className="text-[10px] font-mono text-[#52525B] mt-1">Leave blank if you came in without one.</p>
               )}
             </div>
           </div>
@@ -298,7 +383,7 @@ export default function App() {
         <div className="space-y-3 pt-2">
           <button 
             type="submit"
-            disabled={loading || registered}
+            disabled={loading || registered || handleAvailable === false}
             className="w-full py-4 bg-gradient-to-r from-[#10B981] via-[#059669] to-[#047857] text-black font-extrabold rounded-xl text-sm hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transition-all cursor-pointer disabled:opacity-50 font-mono tracking-wider uppercase"
           >
             {loading ? 'Writing to DB...' : registered ? '✓ Spot Claimed' : '⚡ Confirm Registration'}
