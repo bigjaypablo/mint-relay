@@ -154,25 +154,25 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
-            <div className="emerald-border-glow rounded-xl transition-all">
+            <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">X (Twitter) Handle</label>
               <input 
                 type="text" 
                 placeholder="@username"
                 value={handle}
                 onChange={(e) => setHandle(e.target.value)}
-                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none font-mono"
+                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono"
               />
             </div>
 
-            <div className="emerald-border-glow rounded-xl transition-all">
+            <div>
               <label className="block text-xs font-mono text-[#71717A] mb-1.5">Referrer Handle (optional)</label>
               <input 
                 type="text" 
                 placeholder="@referrer"
                 value={referrer}
                 onChange={(e) => setReferrer(e.target.value)}
-                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none font-mono"
+                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono"
               />
             </div>
           </div>
@@ -187,14 +187,14 @@ export default function App() {
             <span className="w-1.5 h-4 bg-[#10B981] rounded-full"></span>
             <h2 className="text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">03. Destination Wallet</h2>
           </div>
-          <div className="emerald-border-glow rounded-xl transition-all">
+          <div>
             <label className="block text-xs font-mono text-[#71717A] mb-1.5">Solana Public Address</label>
             <input 
               type="text" 
               placeholder="e.g. 7xKX..."
               value={wallet}
               onChange={(e) => setWallet(e.target.value)}
-              className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none"
+              className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all"
             />
           </div>
         </section>
