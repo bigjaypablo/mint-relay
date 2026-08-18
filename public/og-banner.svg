@@ -1,0 +1,18 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#050505"/>
+  <circle cx="600" cy="315" r="300" fill="#10B981" opacity="0.12" filter="blur(60px)"/>
+  <rect x="50" y="50" width="1100" height="530" rx="24" fill="#09090B" stroke="#18181B" stroke-width="2"/>
+  
+  <rect x="100" y="120" width="160" height="32" rx="16" fill="#10B981" fill-opacity="0.1" stroke="#10B981" stroke-opacity="0.3"/>
+  <text x="180" y="141" font-family="monospace" font-size="14" font-weight="bold" fill="#10B981" text-anchor="middle">PHASE 1 LIVE</text>
+  
+  <text x="100" y="240" font-family="sans-serif" font-size="64" font-weight="800" fill="#FAFAFA">Mint Relay</text>
+  <text x="100" y="310" font-family="sans-serif" font-size="32" font-weight="500" fill="#A1A1AA">Reserve your waitlist spot &amp; claim early pass.</text>
+  
+  <text x="100" y="420" font-family="monospace" font-size="20" fill="#71717A">1. Complete Tasks</text>
+  <text x="360" y="420" font-family="monospace" font-size="20" fill="#71717A">2. Submit Solana Wallet</text>
+  <text x="680" y="420" font-family="monospace" font-size="20" fill="#71717A">3. Claim Position Pass</text>
+  
+  <rect x="100" y="470" width="1000" height="1" fill="#18181B"/>
+  <text x="100" y="515" font-family="monospace" font-size="16" fill="#10B981">mint-relay.vercel.app</text>
+</svg>

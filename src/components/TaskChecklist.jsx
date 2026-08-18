@@ -16,13 +16,13 @@ export default function TaskChecklist({ tasks, setTasks }) {
       id: 'repost',
       title: 'Like & Repost Announcement',
       description: 'Repost the official mint announcement post on X.',
-      url: 'https://x.com/i/status/2089831764428538099'
+      url: 'https://x.com/i/status/2089842890017067123'
     },
     {
       id: 'like',
       title: 'Comment on Announcement',
       description: 'Leave a reply or tag 2 web3 friends on the post.',
-      url: 'https://x.com/i/status/2089831764428538099'
+      url: 'https://x.com/i/status/2089842890017067123'
     },
     {
       id: 'telegram',
@@ -53,7 +53,7 @@ export default function TaskChecklist({ tasks, setTasks }) {
     if (!openedTasks[id]) {
       setErrorMessage(prev => ({ 
         ...prev, 
-        [id]: 'Click "Open ↗" to complete the task first.' 
+        [id]: 'Click "Open Link ↗" to complete the task first.' 
       }));
       return;
     }
@@ -82,7 +82,7 @@ export default function TaskChecklist({ tasks, setTasks }) {
       </div>
 
       <p className="text-xs text-[#A1A1AA] leading-relaxed">
-        Complete tasks step-by-step. Click <span className="text-[#FAFAFA] font-bold">Open ↗</span> to launch the link, then click <span className="text-[#10B981] font-bold">Verify Task</span>.
+        Complete tasks step-by-step. Click <span className="text-[#FAFAFA] font-bold">Open Link ↗</span> to launch the link, then click <span className="text-[#10B981] font-bold">Verify Task</span>.
       </p>
 
       <div className="space-y-3 pt-1">
@@ -104,7 +104,6 @@ export default function TaskChecklist({ tasks, setTasks }) {
                   : 'bg-[#000000]/40 border-[#27272A] hover:border-[#10B981]/50'
               }`}
             >
-              {/* TASK TITLE & NUMBER */}
               <div className="flex items-start space-x-3">
                 <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold border shrink-0 mt-0.5 ${
                   isDone 
@@ -133,7 +132,6 @@ export default function TaskChecklist({ tasks, setTasks }) {
                 </div>
               </div>
 
-              {/* ACTION BUTTONS (STACKED ON MOBILE, SIDE-BY-SIDE ON TABLET+) */}
               <div className="flex items-center justify-end gap-2 pt-1 border-t border-[#18181B]/60">
                 {!isDone && (
                   <button
@@ -154,7 +152,7 @@ export default function TaskChecklist({ tasks, setTasks }) {
                   type="button"
                   disabled={isLocked || isDone || isCurrentlyVerifying}
                   onClick={() => handleVerifyTask(task.id, index)}
-                  className={`flex-1 sm:flex-none px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all text-center ${
+                  className={`px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all text-center ${
                     isDone
                       ? 'bg-[#10B981]/20 text-[#10B981] border border-[#10B981]/40 cursor-default'
                       : isLocked
