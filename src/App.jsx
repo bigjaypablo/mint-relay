@@ -12,6 +12,11 @@ export default function App() {
   const [handle, setHandle] = useState('');
   const [referrer, setReferrer] = useState('');
   const [wallet, setWallet] = useState('');
+  
+  const [handleError, setHandleError] = useState('');
+  const [referrerError, setReferrerError] = useState('');
+  const [walletError, setWalletError] = useState('');
+
   const [tasks, setTasks] = useState({
     follow: false,
     like: false,
@@ -32,7 +37,7 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const refParam = params.get('ref');
     if (refParam) {
-      setReferrer(`@${refParam.replace('@', '')}`);
+      setReferrer(refParam.replace('@', ''));
     }
   }, []);
 
@@ -46,6 +51,58 @@ export default function App() {
     }
   };
 
+  // Extract clean handle if full URL is pasted
+  const sanitizeHandle = (input) => {
+    let clean = input.trim();
+    if (clean.includes('x.com/') || clean.includes('twitter.com/')) {
+      clean = clean.split('/').pop().split('?')[0];
+    }
+    return clean.replace('@', '');
+  };
+
+  // Validate handle format
+  const validateXHandle = (val, setError) => {
+    const clean = sanitizeHandle(val);
+    const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+
+    if (!clean) {
+      setError('Username is required.');
+      return false;
+    }
+
+    if (!handleRegex.test(clean)) {
+      setError('Up to 15 letters, digits or underscores.');
+      return false;
+    }
+
+    setError('');
+    return true;
+  };
+
+  const handleHandleChange = (e) => {
+    const raw = e.target.value;
+    const clean = sanitizeHandle(raw);
+    setHandle(clean);
+    if (raw.trim()) validateXHandle(clean, setHandleError);
+    else setHandleError('');
+  };
+
+  const handleReferrerChange = (e) => {
+    const raw = e.target.value;
+    const clean = sanitizeHandle(raw);
+    setReferrer(clean);
+    if (clean) {
+      const handleRegex = /^[a-zA-Z0-9_]{1,15}$/;
+      if (!handleRegex.test(clean)) {
+        setReferrerError(`@${clean} isn't a valid invite handle.`);
+      } else {
+        setReferrerError('');
+      }
+    } else {
+      setReferrerError('');
+    }
+  };
+
   const toggleTask = (key) => {
     setTasks(prev => ({ ...prev, [key]: !prev[key] }));
   };
@@ -54,23 +111,22 @@ export default function App() {
     e.preventDefault();
     setErrorMsg('');
 
-    const cleanHandle = handle.trim().toLowerCase();
+    const isHandleValid = validateXHandle(handle, setHandleError);
     const cleanWallet = wallet.trim();
 
-    if (!cleanHandle) {
-      setErrorMsg('Please enter your X handle.');
-      return;
-    }
+    if (!isHandleValid) return;
 
     if (!cleanWallet || cleanWallet.length < 32 || cleanWallet.length > 44) {
-      setErrorMsg('Please enter a valid public Solana wallet address.');
+      setWalletError('Please enter a valid Solana wallet address.');
       return;
+    } else {
+      setWalletError('');
     }
 
     setLoading(true);
 
-    const formattedHandle = cleanHandle.startsWith('@') ? cleanHandle : `@${cleanHandle}`;
-    const formattedReferrer = referrer.trim() ? (referrer.trim().startsWith('@') ? referrer.trim() : `@${referrer.trim()}`) : null;
+    const formattedHandle = `@${handle.toLowerCase()}`;
+    const formattedReferrer = referrer.trim() ? `@${referrer.trim().toLowerCase()}` : null;
 
     const { data, error } = await supabase
       .from('registrants')
@@ -89,7 +145,7 @@ export default function App() {
 
     if (error) {
       if (error.code === '23505') {
-        setErrorMsg('This X handle is already registered.');
+        setHandleError('This X handle is already registered.');
       } else {
         setErrorMsg(error.message || 'Failed to submit registration.');
       }
@@ -108,7 +164,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#050505] text-[#FAFAFA] px-4 py-12 max-w-xl mx-auto space-y-8 font-sans relative overflow-hidden selection:bg-[#10B981] selection:text-black">
       
-      {/* Background Radial Emerald Glows */}
+      {/* Background Radial Glows */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-[#10B981]/15 rounded-full blur-[120px] pointer-events-none animate-pulse-glow" />
       <div className="absolute bottom-20 -right-20 w-80 h-80 bg-[#059669]/10 rounded-full blur-[100px] pointer-events-none" />
 
@@ -146,42 +202,59 @@ export default function App() {
           </div>
         )}
 
-        {/* 1. Identity */}
+        {/* 01. IDENTITY */}
         <section className="bg-[#09090B]/80 border border-[#18181B] hover:border-[#10B981]/40 transition-all duration-300 p-6 rounded-2xl space-y-4 backdrop-blur-xl emerald-glow-box">
-          <div className="flex items-center space-x-2">
-            <span className="w-1.5 h-4 bg-[#10B981] rounded-full"></span>
-            <h2 className="text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">01. Your Identity</h2>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-4 bg-[#10B981] rounded-full"></span>
+              <h2 className="text-xs font-mono uppercase tracking-widest text-[#10B981] font-bold">01. Your Identity</h2>
+            </div>
+            <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded bg-[#18181B] text-[#71717A]">required</span>
           </div>
 
           <div className="space-y-4">
+            {/* Handle Input with auto @ prefix */}
             <div>
-              <label className="block text-xs font-mono text-[#71717A] mb-1.5">X (Twitter) Handle</label>
-              <input 
-                type="text" 
-                placeholder="@username"
-                value={handle}
-                onChange={(e) => setHandle(e.target.value)}
-                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono"
-              />
+              <label className="block text-xs font-mono text-[#71717A] mb-1.5">Your X username</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-4 text-[#71717A] font-mono text-sm">@</span>
+                <input 
+                  type="text" 
+                  placeholder="username"
+                  value={handle}
+                  onChange={handleHandleChange}
+                  className={`w-full bg-[#000000]/60 border ${handleError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : 'border-[#27272A] focus:border-[#10B981] focus:ring-[#10B981]/20'} rounded-xl pl-9 pr-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all font-mono`}
+                />
+              </div>
+              {handleError && (
+                <p className="text-[11px] font-mono text-red-400 mt-1.5 animate-fade-in">{handleError}</p>
+              )}
             </div>
 
+            {/* Referrer Input */}
             <div>
-              <label className="block text-xs font-mono text-[#71717A] mb-1.5">Referrer Handle (optional)</label>
-              <input 
-                type="text" 
-                placeholder="@referrer"
-                value={referrer}
-                onChange={(e) => setReferrer(e.target.value)}
-                className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all font-mono"
-              />
+              <label className="block text-xs font-mono text-[#71717A] mb-1.5">Invite code · optional</label>
+              <div className="relative flex items-center">
+                <span className="absolute left-4 text-[#71717A] font-mono text-sm">@</span>
+                <input 
+                  type="text" 
+                  placeholder="referrer"
+                  value={referrer}
+                  onChange={handleReferrerChange}
+                  className={`w-full bg-[#000000]/60 border ${referrerError ? 'border-red-500/80 focus:border-red-500 focus:ring-red-500/20' : 'border-[#27272A] focus:border-[#10B981] focus:ring-[#10B981]/20'} rounded-xl pl-9 pr-4 py-3 text-sm text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:ring-1 transition-all font-mono`}
+                />
+              </div>
+              {referrerError && (
+                <p className="text-[11px] font-mono text-red-400 mt-1.5 animate-fade-in">{referrerError}</p>
+              )}
             </div>
           </div>
         </section>
 
-        {/* 2. Tasks */}
+        {/* 02. TASKS */}
         <TaskChecklist tasks={tasks} toggleTask={toggleTask} />
 
-        {/* 3. Wallet */}
+        {/* 03. WALLET */}
         <section className="bg-[#09090B]/80 border border-[#18181B] hover:border-[#10B981]/40 transition-all duration-300 p-6 rounded-2xl space-y-4 backdrop-blur-xl emerald-glow-box">
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-4 bg-[#10B981] rounded-full"></span>
@@ -194,12 +267,15 @@ export default function App() {
               placeholder="e.g. 7xKX..."
               value={wallet}
               onChange={(e) => setWallet(e.target.value)}
-              className="w-full bg-[#000000]/60 border border-[#27272A] rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none focus:border-[#10B981] focus:ring-1 focus:ring-[#10B981] focus:shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-all"
+              className={`w-full bg-[#000000]/60 border ${walletError ? 'border-red-500/80' : 'border-[#27272A] focus:border-[#10B981]'} rounded-xl px-4 py-3 text-xs font-mono text-[#FAFAFA] placeholder-[#52525B] focus:outline-none transition-all`}
             />
+            {walletError && (
+              <p className="text-[11px] font-mono text-red-400 mt-1.5">{walletError}</p>
+            )}
           </div>
         </section>
 
-        {/* Submit CTA */}
+        {/* SUBMIT CTA */}
         <div className="space-y-3 pt-2">
           <button 
             type="submit"
@@ -222,7 +298,7 @@ export default function App() {
         </div>
       </form>
 
-      {/* Post Registration Screen */}
+      {/* POST REGISTRATION SCREEN */}
       {registered && (
         <section className="pt-8 space-y-5 flex flex-col items-center border-t border-[#18181B] animate-float">
           <div className="w-full text-center space-y-1">
@@ -231,10 +307,10 @@ export default function App() {
           </div>
 
           <PassCard 
-            handle={handle.startsWith('@') ? handle : `@${handle}`}
+            handle={`@${handle}`}
             position={userPosition}
             wallet={wallet}
-            inviteCode={handle.replace('@', '')}
+            inviteCode={handle}
             joinedDate={new Date().toISOString().split('T')[0]}
           />
 
